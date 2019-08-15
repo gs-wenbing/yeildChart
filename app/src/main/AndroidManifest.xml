@@ -15,7 +15,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/AppBaseTheme">
         <activity
             android:name=".view.home.HomeActivity"
@@ -28,6 +28,7 @@
         </activity>
         <activity android:name=".view.home.SecontActivity"/>
         <activity android:name=".view.home.ChartActivity"/>
+        <activity android:name=".view.home.AboutActivity" />
     </application>
 
 </manifest>

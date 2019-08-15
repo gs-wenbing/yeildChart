@@ -11,13 +11,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 
 import com.zwb.yeildchart.R;
-
-import java.util.List;
 
 
 /**
@@ -48,7 +47,8 @@ public abstract class BaseActivity extends AppCompatActivity {
     /**
      * 返回按钮  标题按钮  右边按钮
      */
-    private TextView tvBack, tvTitle, tv_right;
+    protected TextView tvBack, tvTitle, tvRight;
+    protected ImageView ivRight;
     protected LinearLayout llRight;
     public Context mContext = null;
 
@@ -100,7 +100,8 @@ public abstract class BaseActivity extends AppCompatActivity {
             });
         }
         tvTitle = $(R.id.tv_title);
-        tv_right = $(R.id.tv_right);
+        tvRight = $(R.id.tv_right);
+        ivRight = $(R.id.iv_right);
         llRight = $(R.id.ll_right);
     }
     /**

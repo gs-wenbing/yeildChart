@@ -62,6 +62,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         setTitleText("首页");
         setBackVisible(false);
         setRightVisible(true);
+        ivRight.setVisibility(View.VISIBLE);
         mAdapter = new TeamAdapter(this, new ArrayList<>());
         FragmentManager fragmentManager = getFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -74,6 +75,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     @Override
     protected void initListener() {
         llRight.setOnClickListener(this);
+        ivRight.setOnClickListener(this);
         mAdapter.setOnItemClickLinsener(this);
         mAdapter.setOnItemLongClickLinsener(this);
     }
@@ -93,6 +95,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
                     .withFileFilter(new String[]{".xls", ".xlsx"})
                     .withSortFileUp(true)
                     .start();
+        }else if(v.getId() == R.id.iv_right){
+            startActivity(new Intent(this,AboutActivity.class));
         }
     }
 

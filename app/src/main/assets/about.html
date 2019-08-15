@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<script>
+			(function(doc, win) {
+				var w = document.documentElement.clientWidth;
+				if (w > 750) {
+					w = 750
+				} else if (w < 320) {
+					w = 320
+				}
+				var f = w / 750 * 100 + "px";
+				document.documentElement.style.fontSize = f;
+				var docEl = doc.documentElement,
+					resizeEvt = 'orientationchange' in window ? 'orientationchange' : 'resize',
+					recalc = function() {
+						var clientWidth = docEl.clientWidth > 750 ? 750 : docEl.clientWidth;
+						if (clientWidth > 750) {
+							clientWidth = 750
+						} else if (clientWidth < 320) {
+							clientWidth = 320
+						}
+						if (!clientWidth) return;
+						docEl.style.fontSize = 100 * (clientWidth / 750) + 'px';
+					};
+			
+				if (!doc.addEventListener) return;
+				win.addEventListener(resizeEvt, recalc, false);
+				doc.addEventListener('DOMContentLoaded', recalc, false);
+			})(document, window);
+		</script>
+	</head>
+	<body style="padding: 10px;">
+		<div style="line-height: 2;font-size: 12px;">
+			1、把excel文件导入到手机里面，点击首页右上角的<span style="font-size: 20px;">+</span>，导入手机里的excel文件，即可生成数据。<br>
+			2、excel格式需要注意一下几点<span style="color: red;font-weight: 700;">(必须按要求，否则解析失败或者导入数据异常)：</span><br>
+			<span style="color: red;">（1）excel最左边和左上边不能留空格,如下图红色标记的完全没必要<br></span>
+			<img src="about1.png" style="width: 100%;"/>
+			<span style="color: red;">（2）excel的第一列必须是日期，也就是A列必须是日期<br></span>
+			<span style="color: red;">（3）excel的必须有标题行，可以是多行（分级），但是必须要规范，如下就不规范：<br></span>
+			<img src="about2.png" style="width: 100%;"/>
+			<img src="about4.png" style="width: 100%;"/>
+			<img src="about5.png" style="width: 100%;"/>
+			<span style="color: red;">（4）excel标题栏以下的数据必须要规范，不能被()、[]、{}包裹或者其他非数字字符，数据栏列数不能超出标题栏的列数<br><br></span>
+			<img src="about3.png" style="width: 100%;"/>
+			<img src="about6.png" style="width: 100%;"/>
+			（5）excel的数据可以为空，为空会解析为0<br>
+			（6）excel的标题栏第一行最好不要和sheet的名称一样，一个字段独占一行，没任何意义，并影响美观<br>
+			
+			<span style="color: red;font-weight: 700;">正确格式示例：</span><br>
+			1、有多行标题栏<br>
+			<img src="about10.png" style="width: 100%;"/>
+			2、只有一行标题栏<br>
+			<img src="about11.png" style="width: 100%;"/>
+		</div>
+		<span style="font-size: 20px;font-weight: 700;">最后祝您工作愉快 ^^</span><br>
+	</body>
+	
+</html>
