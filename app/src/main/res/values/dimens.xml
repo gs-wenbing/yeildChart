@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 页面顶部标题栏高度 -->
+    <dimen name="top_title_height">44dp</dimen>
+    <!-- 上标题栏 -->
+    <dimen name="tv_title_size">16sp</dimen>
+    <dimen name="tv_back_size">15sp</dimen>
+    <dimen name="tv_right_size">15sp</dimen>
+
+    <dimen name="row_spacing">12dp</dimen>
+    <dimen name="row_spacing_blank">8dp</dimen>
+    <dimen name="row_spacing_half">6dp</dimen>
+
+    <dimen name="common_size">14sp</dimen>
+    <dimen name="common_small_size">13sp</dimen>
+</resources>

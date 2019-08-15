@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:background="@drawable/btn_common_selector"
+    >
+    <TextView
+        android:id="@+id/tv_team_name"
+        android:layout_width="match_parent"
+        android:layout_height="49dp"
+        android:layout_marginLeft="20dp"
+        android:gravity="center_vertical"
+        android:text="站点1"
+        android:textColor="@color/common_tv_color"
+        android:textSize="@dimen/common_small_size" />
+    <ImageView
+        android:layout_width="12dp"
+        android:layout_height="7dp"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:background="@mipmap/collapse"
+        />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@+id/tv_team_name"
+        android:background="#E5E5E5"
+        />
+</RelativeLayout>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:visibility="visible">
+
+    <com.zwb.yeildchart.widget.DrawableCenterTextView
+        android:id="@+id/empty_retry"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:drawableTop="@mipmap/no_data_tishi"
+        android:drawablePadding="20dp"
+        android:textColor="#C7C7C7"
+        android:text="哎呦，暂时还没有数据"
+        android:textSize="16sp"
+        android:visibility="visible" />
+
+</LinearLayout>

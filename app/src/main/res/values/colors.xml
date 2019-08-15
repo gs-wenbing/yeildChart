@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#2E9DED</color>
+
+    <!-- 下边框色 -->
+    <color name="b_line_color">#d8d8d8</color>
+    <color name="greeny">#30b500</color>
+    <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
+    <color name="red">#ff0000</color>
+    <color name="transparent">#00000000</color>
+
+
+    <color name="common_bg">#F7F7F7</color>
+    <color name="common_tv_color">#545454</color>
+    <color name="common_tv_grey_color">#545454</color>
+
+</resources>
