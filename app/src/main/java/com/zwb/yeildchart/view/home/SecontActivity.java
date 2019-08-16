@@ -236,43 +236,36 @@ public class SecontActivity extends BaseActivity implements RecyclerFragment.Rec
     private void analysisTitle(Sheet sheet, ArrayList<Team> pTeamlist){
         //获取sheet的mCurrRow行的所有列
         Cell[] cells = sheet.getRow(mCurrRow);
+        //第mCurrRow行的第一列 是不是日期
+        String firstColumn =  cells[0].getContents();
+        if (!TextUtils.isEmpty(firstColumn) && !isTitleRow(firstColumn)) {
+            isTitleRowFinish = true;
+            return;
+        }
         if(pTeamlist.isEmpty()){
-            loopColumn(sheet,cells.length,intentTeam);
+            loopColumn(sheet,0,cells.length,intentTeam);
         }else{
             for (int i = 0; i < pTeamlist.size(); ++i) {
                 Team cTeam = pTeamlist.get(i);
                 Cell[] ccellsxxx = sheet.getRow(cTeam.getRow() + 1);
-                loopColumn(sheet,ccellsxxx.length,cTeam);
+                loopColumn(sheet,cTeam.getColumn(),ccellsxxx.length,cTeam);
             }
         }
         if(!isTitleRowFinish){
             mCurrRow++;
         }
     }
-    private void loopColumn(Sheet sheet,int columnLength,Team pTeam){
+    private void loopColumn(Sheet sheet,int startIndex,int columnLength,Team pTeam){
         Range[] rangeCell = sheet.getMergedCells();
-        for (int i = 0; i < columnLength; ++i) {
+        for (int i = startIndex; i < columnLength; ++i) {
             String column1 = (sheet.getCell(i, mCurrRow)).getContents();
-//            column1 = TextUtils.isEmpty(column1)?intentTeam.getTeamName()+"（本列数据有问题）":column1;
-            if(pTeam.isMergedCell()){
-                if (i >= pTeam.getTopLeftColumn() && i <= pTeam.getBottomRightColumn()) {
-                    if (!TextUtils.isEmpty(column1) &&!column1.equals("时间") && !column1.equals("日期")) {
-                        if (isTitleRow(column1)) {
-                            parseTeam(sheet,rangeCell, column1, pTeam, i);
-                        }else{
-                            isTitleRowFinish = true;
-                            break;
-                        }
-                    }
-                }
-            }else{
-                if (!TextUtils.isEmpty(column1) &&!column1.equals("时间") && !column1.equals("日期")) {
-                    if (isTitleRow(column1)) {
+            if (!TextUtils.isEmpty(column1) &&!column1.equals("时间") && !column1.equals("日期")) {
+                if(pTeam.isMergedCell()){
+                    if (i >= pTeam.getTopLeftColumn() && i <= pTeam.getBottomRightColumn()) {
                         parseTeam(sheet,rangeCell, column1, pTeam, i);
-                    }else{
-                        isTitleRowFinish = true;
-                        break;
                     }
+                }else{
+                      parseTeam(sheet,rangeCell, column1, pTeam, i);
                 }
             }
         }

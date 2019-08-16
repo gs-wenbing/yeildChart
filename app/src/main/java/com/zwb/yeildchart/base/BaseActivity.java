@@ -6,6 +6,7 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,10 @@ import android.widget.TextView;
 
 import com.zwb.yeildchart.R;
 
+import java.util.List;
+
+import pub.devrel.easypermissions.EasyPermissions;
+
 
 /**
  * base
@@ -25,7 +30,7 @@ import com.zwb.yeildchart.R;
  * @author
  * @date
  */
-public abstract class BaseActivity extends AppCompatActivity {
+public abstract class BaseActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
 
     /**
      * 刷新
@@ -238,6 +243,49 @@ public abstract class BaseActivity extends AppCompatActivity {
      * 初始化监听
      */
     protected abstract void initListener();
+
+    /**
+     * 申请权限
+     *
+     * @param perms
+     */
+    protected void requestPermission(String[] perms, int requestCode) {
+        //所要申请的权限   检查是否获取该权限
+        if (EasyPermissions.hasPermissions(this, perms)) {
+            goHandlerOnPermissionsGranted(requestCode);
+        } else {
+            //第二个参数是被拒绝后再次申请该权限的解释
+            //第三个参数是请求码
+            //第四个参数是要申请的权限
+            ActivityCompat.requestPermissions(this, perms, requestCode);
+//            EasyPermissions.requestPermissions(this, "需要的权限", requestCode, perms);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        // Forward results to EasyPermissions
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
+
+    @Override
+    public void onPermissionsGranted(int requestCode, List<String> list) {
+        // Some permissions have been granted
+        goHandlerOnPermissionsGranted(requestCode);
+    }
+
+    @Override
+    public void onPermissionsDenied(int requestCode, List<String> list) {
+        // Some permissions have been denied
+        // ...
+    }
+
+    /**
+     * 权限获取成功
+     */
+    protected void goHandlerOnPermissionsGranted(int requestCode) {
+    }
 
     @Override
     public void startActivity(Intent intent) {

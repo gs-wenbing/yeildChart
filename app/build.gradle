@@ -50,6 +50,7 @@ dependencies {
     implementation 'com.jcodecraeer:xrecyclerview:1.5.9'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.6'
+    implementation 'com.jakewharton.rxbinding2:rxbinding:2.1.1'
 
     compile project(':filepicker')
     annotationProcessor "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflow_version}"
@@ -58,9 +59,7 @@ dependencies {
     // sql-cipher database encyrption (optional)
     implementation "com.github.Raizlabs.DBFlow:dbflow-sqlcipher:${dbflow_version}"
 
-    implementation('com.github.tbruyelle:rxpermissions:0.10.2') {
-        exclude group: 'com.android.support'
-    }
+    implementation 'pub.devrel:easypermissions:2.0.1'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation 'org.greenrobot:eventbus:3.0.0'
 

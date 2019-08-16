@@ -1,6 +1,7 @@
 package com.zwb.yeildchart.view.home;
 
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -9,6 +10,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -46,7 +49,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     RecyclerFragment<Team> recyclerFragment;
     private BaseRVAdapter<Team> mAdapter;
     private String path = "";
-
+    private int PermissionCode;
     @Override
     protected int initPageLayoutID() {
         return R.layout.activity_home;
@@ -69,9 +72,18 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         recyclerFragment = RecyclerFragment.newInstance();
         fragmentTransaction.add(R.id.framelayout, recyclerFragment).commit();
         recyclerFragment.init(mAdapter, this);
+        String[] perms = {Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE};
+        requestPermission(perms, 1);
 
     }
-
+    @Override
+    protected void goHandlerOnPermissionsGranted(int requestCode) {
+        super.goHandlerOnPermissionsGranted(requestCode);
+        if (requestCode == 1) {
+            Log.e(">>>>>>>>>>","权限开启");
+            PermissionCode = 1;
+        }
+    }
     @Override
     protected void initListener() {
         llRight.setOnClickListener(this);
@@ -84,22 +96,40 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.ll_right) {
+            if(PermissionCode!=1){
+                String[] perms = {Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE};
+                requestPermission(perms, 1);
+                return;
+            }
+
             String sdcard = Environment.getExternalStorageDirectory().getPath();
-            new LFilePicker()
-                    .withActivity(this)
-                    .withRequestCode(REQUESTCODE_FROM_ACTIVITY)
-                    .withStartPath(sdcard)
-                    .withIsGreater(true)
-                    .withFileSize(1024)
-                    .withChooseMode(true)
-                    .withFileFilter(new String[]{".xls", ".xlsx"})
-                    .withSortFileUp(true)
-                    .start();
+            new AlertDialog.Builder(this)
+                    .setTitle("")
+                    .setMessage("打开文件在？")
+                    .setPositiveButton("手机根目录", (dialog, which) -> {
+                        openFileDirectory(sdcard);
+                    })
+                    .setNegativeButton("微信", (dialog, which) -> {
+                        openFileDirectory(sdcard+"/tencent/MicroMsg/Download");
+                    })
+                    .show();
         }else if(v.getId() == R.id.iv_right){
             startActivity(new Intent(this,AboutActivity.class));
         }
     }
 
+    private void openFileDirectory(String filePath){
+        new LFilePicker()
+                .withActivity(this)
+                .withRequestCode(REQUESTCODE_FROM_ACTIVITY)
+                .withStartPath(filePath)
+                .withIsGreater(true)
+                .withFileSize(1024)
+                .withChooseMode(true)
+                .withFileFilter(new String[]{".xls", ".xlsx"})
+                .withSortFileUp(true)
+                .start();
+    }
     @Override
     public void onRecyclerCreated(XRecyclerView recyclerView) {
         recyclerFragment.setLoadingEnable(false);
