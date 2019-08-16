@@ -25,6 +25,7 @@ public class ParamEntity implements Serializable {
     private long fileSize;
     private boolean isGreater;
     private boolean mSortFileUp = true;
+    private boolean isOnlyFile = true;
 
     public String getTitle() {
         return title;
@@ -162,5 +163,13 @@ public class ParamEntity implements Serializable {
 
     public void setSortFileUp(boolean mSortFileUp) {
         this.mSortFileUp = mSortFileUp;
+    }
+
+    public void setOnlyFile(boolean onlyFile) {
+        isOnlyFile = onlyFile;
+    }
+
+    public boolean isOnlyFile() {
+        return isOnlyFile;
     }
 }

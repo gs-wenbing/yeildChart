@@ -37,6 +37,8 @@ public class LFilePicker {
     private boolean mIsGreater = true;//是否大于
     private long mFileSize;
     private boolean mSortFileUp = true;
+    private boolean mOnlyFile = false;
+
     /**
      * 绑定Activity
      *
@@ -247,7 +249,10 @@ public class LFilePicker {
         this.mSortFileUp = isSortFileUp;
         return this;
     }
-
+    public LFilePicker withOnlyFile(boolean onlyFile){
+        this.mOnlyFile = onlyFile;
+        return this;
+    }
     /**
      * 设置过滤文件大小
      *
@@ -309,6 +314,7 @@ public class LFilePicker {
         paramEntity.setFileSize(mFileSize);
         paramEntity.setGreater(mIsGreater);
         paramEntity.setSortFileUp(mSortFileUp);
+        paramEntity.setOnlyFile(mOnlyFile);
         Bundle bundle = new Bundle();
         bundle.putSerializable("param", paramEntity);
         return bundle;

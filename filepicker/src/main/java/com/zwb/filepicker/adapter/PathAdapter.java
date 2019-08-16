@@ -17,6 +17,7 @@ import com.zwb.filepicker.utils.FileUtils;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,7 +34,7 @@ public class PathAdapter extends RecyclerView.Adapter<PathAdapter.PathViewHolder
     }
 
     private final String TAG = "FilePickerLeon";
-    private List<File> mListData;
+    private List<File> mListData = new ArrayList<>();
     private Context mContext;
     public OnItemClickListener onItemClickListener;
     private FileFilter mFileFilter;
@@ -43,19 +44,33 @@ public class PathAdapter extends RecyclerView.Adapter<PathAdapter.PathViewHolder
     private boolean mIsGreater;
     private long mFileSize;
     private boolean mSortFileUp;
-
-    public PathAdapter(List<File> mListData, Context mContext, FileFilter mFileFilter,
+    public PathAdapter(Context mContext, FileFilter mFileFilter,
                        boolean mMutilyMode, boolean mIsGreater, long mFileSize,boolean mSortFileUp) {
-        this.mListData = mListData;
         this.mContext = mContext;
         this.mFileFilter = mFileFilter;
         this.mMutilyMode = mMutilyMode;
         this.mIsGreater = mIsGreater;
         this.mFileSize = mFileSize;
         this.mSortFileUp = mSortFileUp;
-        mCheckedFlags = new boolean[mListData.size()];
     }
 
+//    public PathAdapter(List<File> mListData, Context mContext, FileFilter mFileFilter,
+//                       boolean mMutilyMode, boolean mIsGreater, long mFileSize,boolean mSortFileUp) {
+//        this.mListData = mListData;
+//        this.mContext = mContext;
+//        this.mFileFilter = mFileFilter;
+//        this.mMutilyMode = mMutilyMode;
+//        this.mIsGreater = mIsGreater;
+//        this.mFileSize = mFileSize;
+//        this.mSortFileUp = mSortFileUp;
+//        mCheckedFlags = new boolean[mListData.size()];
+//    }
+
+    public void setData(List<File> mListData){
+       this.mListData = mListData;
+       mCheckedFlags = new boolean[mListData.size()];
+       notifyDataSetChanged();
+    }
     @Override
     public PathViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = View.inflate(mContext, R.layout.lfile_listitem, null);

@@ -64,6 +64,24 @@ public class FileUtils {
     }
 
     /**
+     * 遍历所有文件夹 获取指定格式的文件
+     * @param path
+     * @param filter
+     * @param returnList
+     */
+    public static void getOnlyFiles(String path, FileFilter filter,List<File> returnList) {
+        List<File> list = FileUtils.getFileListByDirPath(path, filter,true);
+        for (File file1 : list) {
+            if (file1.isDirectory()) {
+                getOnlyFiles(file1.getPath(),filter,returnList);
+            } else {
+                returnList.add(file1);
+//                System.out.println(file1.getName());
+            }
+        }
+    }
+
+    /**
      * 根据地址获取当前地址下的所有目录和文件，并且排序,同时过滤掉不符合大小要求的文件
      *
      * @param path

@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -37,7 +38,20 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.ObservableSource;
+import io.reactivex.Observer;
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.observers.DisposableObserver;
+import io.reactivex.schedulers.Schedulers;
 import jxl.Workbook;
 
 /**
@@ -46,10 +60,13 @@ import jxl.Workbook;
  */
 public class HomeActivity extends BaseActivity implements View.OnClickListener, RecyclerFragment.RecyclerListener, BaseRVAdapter.OnItemClickLinsener, BaseRVAdapter.OnItemLongClickLinsener {
     private static final int REQUESTCODE_FROM_ACTIVITY = 1000;
+    private static final String TAG = "HomeActivity";
     RecyclerFragment<Team> recyclerFragment;
     private BaseRVAdapter<Team> mAdapter;
+    private ProgressDialog dialog;
     private String path = "";
     private int PermissionCode;
+
     @Override
     protected int initPageLayoutID() {
         return R.layout.activity_home;
@@ -73,18 +90,20 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         fragmentTransaction.add(R.id.framelayout, recyclerFragment).commit();
         recyclerFragment.init(mAdapter, this);
         recyclerFragment.setNeedCheckNet(false);
-        String[] perms = {Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE};
+        String[] perms = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
         requestPermission(perms, 1);
 
     }
+
     @Override
     protected void goHandlerOnPermissionsGranted(int requestCode) {
         super.goHandlerOnPermissionsGranted(requestCode);
         if (requestCode == 1) {
-            Log.e(">>>>>>>>>>","权限开启");
+            Log.e(">>>>>>>>>>", "权限开启");
             PermissionCode = 1;
         }
     }
+
     @Override
     protected void initListener() {
         llRight.setOnClickListener(this);
@@ -97,8 +116,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.ll_right) {
-            if(PermissionCode!=1){
-                String[] perms = {Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE};
+            if (PermissionCode != 1) {
+                String[] perms = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
                 requestPermission(perms, 1);
                 return;
             }
@@ -107,19 +126,24 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
             new AlertDialog.Builder(this)
                     .setTitle("")
                     .setMessage("打开文件在？")
-                    .setPositiveButton("手机根目录", (dialog, which) -> {
-                        openFileDirectory(sdcard);
+                    .setPositiveButton("QQ", (dialog, which) -> {
+//                      /tencent/QQfile_recv
+                        openFileDirectory(sdcard + "/tencent/QQfile_recv",true);
+                    })
+                    .setNeutralButton("手机根目录",(dialog, which) -> {
+                        openFileDirectory(sdcard,false);
                     })
                     .setNegativeButton("微信", (dialog, which) -> {
-                        openFileDirectory(sdcard+"/tencent/MicroMsg/Download");
+//                      /tencent/MicroMsg/Download
+                        openFileDirectory(sdcard + "/tencent/MicroMsg/Download",true);
                     })
                     .show();
-        }else if(v.getId() == R.id.iv_right){
-            startActivity(new Intent(this,AboutActivity.class));
+        } else if (v.getId() == R.id.iv_right) {
+            startActivity(new Intent(this, AboutActivity.class));
         }
     }
 
-    private void openFileDirectory(String filePath){
+    private void openFileDirectory(String filePath,boolean onlyFile) {
         new LFilePicker()
                 .withActivity(this)
                 .withRequestCode(REQUESTCODE_FROM_ACTIVITY)
@@ -127,10 +151,13 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
                 .withIsGreater(true)
                 .withFileSize(1024)
                 .withChooseMode(true)
-                .withFileFilter(new String[]{".xls", ".xlsx"})
+                .withFileFilter(new String[]{".xls"})
+//                .withOnlyFile(onlyFile)
+                .withMutilyMode(false)
                 .withSortFileUp(true)
                 .start();
     }
+
     @Override
     public void onRecyclerCreated(XRecyclerView recyclerView) {
         recyclerFragment.setLoadingEnable(false);
@@ -166,9 +193,9 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
                                 Toast.makeText(mContext, "删除成功，请下来刷新列表", Toast.LENGTH_SHORT).show();
                                 Log.e(">>>>>>>>>>>", "删除成功");
                             }).success(transaction1 -> {
-                                recyclerFragment.initData();
-                                Toast.makeText(mContext, "删除成功", Toast.LENGTH_SHORT).show();
-                            }).build();
+                        recyclerFragment.initData();
+                        Toast.makeText(mContext, "删除成功", Toast.LENGTH_SHORT).show();
+                    }).build();
                     transaction.execute();
                 })
                 .setNegativeButton("取消", (dialog, which) -> {
@@ -211,65 +238,35 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
 //                String path = data.getStringExtra("path");
                 Log.e("::::::::::::::", list.get(0));
                 path = list.get(0);
-                new TestAsyncTask(HomeActivity.this).execute(path);
+                onRunScheduler(path);
             }
         }
     }
 
-    class TestAsyncTask extends AsyncTask<String, Integer, List<File>> {
 
-        private Context mContext;
-
-        TestAsyncTask(Context context) {
-            this.mContext = context;
-        }
-
-        private ProgressDialog dialog;
-
-        //2、运行完onPreExecute后执行，长时间的操作放在此方法内，
-        //此方法内不能操作UI
-        //返回结果值
-        @Override
-        protected List<File> doInBackground(String... strings) {
-            readExcel(strings[0]);
-            return null;
-        }
-
-        //1、开始执行时运行
-        @Override
-        protected void onPreExecute() {
-            dialog = ProgressDialog.show(mContext, "", "文件解析中，请不要退出...");
-            super.onPreExecute();
-        }
-
-        //3、执行完毕
-        @Override
-        protected void onPostExecute(List<File> list) {
-            if (dialog.isShowing()) {
-                dialog.dismiss();
-            }
-            super.onPostExecute(list);
-
-            recyclerFragment.initData();
-        }
-
-        //执行过程进行进度更新等操作
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-        }
-
-        //调用取消时，要做的操作
-        @Override
-        protected void onCancelled(List<File> list) {
-            super.onCancelled(list);
-        }
-
-        //调用取消时，要做的操作
-        @Override
-        protected void onCancelled() {
-            super.onCancelled();
-        }
+    void onRunScheduler(String filePath) {
+        dialog = ProgressDialog.show(mContext, "", "文件解析中，请不要退出...");
+        mDisposables.add(Observable.create(emitter -> {
+            HomeActivity.this.readExcel(filePath);
+            emitter.onNext("");
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Object>() {
+                    @Override
+                    public void accept(Object x) throws Exception {
+                        //回调后在UI界面上展示出来
+                        if (dialog.isShowing()) {
+                            dialog.dismiss();
+                        }
+                        recyclerFragment.initData();
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        throwable.printStackTrace();
+                    }
+                }));
     }
 
     public void readExcel(String filePath) {
@@ -318,4 +315,5 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
                 }).build();
         transaction.execute();
     }
+
 }

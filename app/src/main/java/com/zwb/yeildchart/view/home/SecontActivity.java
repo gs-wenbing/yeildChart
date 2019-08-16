@@ -33,6 +33,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import jxl.Cell;
 import jxl.Range;
 import jxl.Sheet;
@@ -46,6 +52,7 @@ import jxl.read.biff.BiffException;
 public class SecontActivity extends BaseActivity implements RecyclerFragment.RecyclerListener, BaseRVAdapter.OnItemClickLinsener {
     RecyclerFragment<Team> recyclerFragment;
     private BaseRVAdapter<Team> mAdapter;
+    private ProgressDialog dialog;
     //二级以下用到
     private Team intentTeam;
 
@@ -68,8 +75,8 @@ public class SecontActivity extends BaseActivity implements RecyclerFragment.Rec
         setBackVisible(true);
         setRightVisible(false);
         long count = SQLite.select().from(Team.class).where(Team_Table.taamPID.eq(intentTeam.getTeamID())).count();
-        if(count == 0){
-            new TestAsyncTask(SecontActivity.this).execute(intentTeam.getXlsPath(), intentTeam.getTeamID() + "");
+        if (count == 0) {
+            onRunScheduler(intentTeam.getXlsPath());
         }
 
         mAdapter = new TeamAdapter(this, new ArrayList<>());
@@ -103,69 +110,29 @@ public class SecontActivity extends BaseActivity implements RecyclerFragment.Rec
     public void onItemClick(BaseRVAdapter baseAdapter, int position) {
         Team team = mAdapter.getBeans().get(position - 1);
         Intent intent;
-        if(team.isLast()){
+        if (team.isLast()) {
             intent = new Intent(mContext, ChartActivity.class);
-        }else{
-            intent = new Intent(mContext,SecontActivity.class);
+        } else {
+            intent = new Intent(mContext, SecontActivity.class);
         }
         intent.putExtra("data", team);
         mContext.startActivity(intent);
     }
 
-    class TestAsyncTask extends AsyncTask<String, Integer, List<File>> {
-
-        private Context mContext;
-
-        TestAsyncTask(Context context) {
-            this.mContext = context;
-        }
-
-        private ProgressDialog dialog;
-
-        //2、运行完onPreExecute后执行，长时间的操作放在此方法内，
-        //此方法内不能操作UI
-        //返回结果值
-        @Override
-        protected List<File> doInBackground(String... strings) {
-            readExcel(strings[0]);
-            return null;
-        }
-
-        //1、开始执行时运行
-        @Override
-        protected void onPreExecute() {
-            dialog = ProgressDialog.show(mContext, "", "文件解析中，请不要退出...");
-            super.onPreExecute();
-        }
-
-        //3、执行完毕
-        @Override
-        protected void onPostExecute(List<File> list) {
-            if (dialog.isShowing()) {
-                dialog.dismiss();
-            }
-            super.onPostExecute(list);
-
-            recyclerFragment.initData();
-        }
-
-        //执行过程进行进度更新等操作
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-        }
-
-        //调用取消时，要做的操作
-        @Override
-        protected void onCancelled(List<File> list) {
-            super.onCancelled(list);
-        }
-
-        //调用取消时，要做的操作
-        @Override
-        protected void onCancelled() {
-            super.onCancelled();
-        }
+    void onRunScheduler(String filePath) {
+        dialog = ProgressDialog.show(mContext, "", "文件解析中，请不要退出...");
+        mDisposables.add(Observable.create(emitter -> {
+            SecontActivity.this.readExcel(filePath);
+            emitter.onNext("");
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread()).subscribe(x -> {
+                    //回调后在UI界面上展示出来
+                    if (dialog.isShowing()) {
+                        dialog.dismiss();
+                    }
+                    recyclerFragment.initData();
+                }, Throwable::printStackTrace));
     }
 
     public void readExcel(String filePath) {
@@ -194,87 +161,91 @@ public class SecontActivity extends BaseActivity implements RecyclerFragment.Rec
         Sheet sheet = book.getSheet(intentTeam.getSheetIndex());
         mTeamlist = intentTeam.getChildList();
         //解析标题
-        while (!isTitleRowFinish){
-            analysisTitle(sheet,mTeamlist);
+        while (!isTitleRowFinish) {
+            analysisTitle(sheet, mTeamlist);
         }
-        analysisDate(sheet,intentTeam.getChildList());
-        Log.e("yy",intentTeam.toString());
+        analysisDate(sheet, intentTeam.getChildList());
+        Log.e("yy", intentTeam.toString());
         //插入数据
         insertTransaction(intentTeam.getChildList());
     }
+
     //从第1列开始，第0行是日期
     int mCurrColumn = 1;
-    private void analysisDate(Sheet sheet, ArrayList<Team> pTeamlist){
 
-        for (int i=0;i<pTeamlist.size();i++){
-            Team team =  pTeamlist.get(i);
-            if(team.getChildList().isEmpty()){
+    private void analysisDate(Sheet sheet, ArrayList<Team> pTeamlist) {
+
+        for (int i = 0; i < pTeamlist.size(); i++) {
+            Team team = pTeamlist.get(i);
+            if (team.getChildList().isEmpty()) {
                 team.setLast(true);
                 int rows = sheet.getRows();
-                for (int k=mCurrRow;k<rows;k++){
+                for (int k = mCurrRow; k < rows; k++) {
                     String time = (sheet.getCell(0, k)).getContents();
                     String column;
                     try {
                         column = (sheet.getCell(mCurrColumn, k)).getContents();
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         continue;
                     }
                     Yeild yeild;
                     try {
-                        yeild = new Yeild(Float.parseFloat(column),  team.getTeamID(), changeNumToDate(time));
-                    }catch (Exception e){
-                        yeild = new Yeild(0,  team.getTeamID(), changeNumToDate(time));
+                        yeild = new Yeild(Float.parseFloat(column), team.getTeamID(), changeNumToDate(time));
+                    } catch (Exception e) {
+                        yeild = new Yeild(0, team.getTeamID(), changeNumToDate(time));
                     }
                     team.getYeildList().add(yeild);
                 }
                 mCurrColumn++;
-            }else{
-                analysisDate(sheet,team.getChildList());
+            } else {
+                analysisDate(sheet, team.getChildList());
             }
         }
     }
-    private void analysisTitle(Sheet sheet, ArrayList<Team> pTeamlist){
+
+    private void analysisTitle(Sheet sheet, ArrayList<Team> pTeamlist) {
         //获取sheet的mCurrRow行的所有列
         Cell[] cells = sheet.getRow(mCurrRow);
         //第mCurrRow行的第一列 是不是日期
-        String firstColumn =  cells[0].getContents();
+        String firstColumn = cells[0].getContents();
         if (!TextUtils.isEmpty(firstColumn) && !isTitleRow(firstColumn)) {
             isTitleRowFinish = true;
             return;
         }
-        if(pTeamlist.isEmpty()){
-            loopColumn(sheet,0,cells.length,intentTeam);
-        }else{
+        if (pTeamlist.isEmpty()) {
+            loopColumn(sheet, 0, cells.length, intentTeam);
+        } else {
             for (int i = 0; i < pTeamlist.size(); ++i) {
                 Team cTeam = pTeamlist.get(i);
                 Cell[] ccellsxxx = sheet.getRow(cTeam.getRow() + 1);
-                loopColumn(sheet,cTeam.getColumn(),ccellsxxx.length,cTeam);
+                loopColumn(sheet, cTeam.getColumn(), ccellsxxx.length, cTeam);
             }
         }
-        if(!isTitleRowFinish){
+        if (!isTitleRowFinish) {
             mCurrRow++;
         }
     }
-    private void loopColumn(Sheet sheet,int startIndex,int columnLength,Team pTeam){
+
+    private void loopColumn(Sheet sheet, int startIndex, int columnLength, Team pTeam) {
         Range[] rangeCell = sheet.getMergedCells();
         for (int i = startIndex; i < columnLength; ++i) {
             String column1 = (sheet.getCell(i, mCurrRow)).getContents();
-            if (!TextUtils.isEmpty(column1) &&!column1.equals("时间") && !column1.equals("日期")) {
-                if(pTeam.isMergedCell()){
+            if (!TextUtils.isEmpty(column1) && !column1.equals("时间") && !column1.equals("日期")) {
+                if (pTeam.isMergedCell()) {
                     if (i >= pTeam.getTopLeftColumn() && i <= pTeam.getBottomRightColumn()) {
-                        parseTeam(sheet,rangeCell, column1, pTeam, i);
+                        parseTeam(sheet, rangeCell, column1, pTeam, i);
                     }
-                }else{
-                      parseTeam(sheet,rangeCell, column1, pTeam, i);
+                } else {
+                    parseTeam(sheet, rangeCell, column1, pTeam, i);
                 }
             }
         }
         mTeamlist = pTeam.getChildList();
     }
 
-    private void parseTeam(Sheet sheet,Range[] rangeCell,String column1,Team pTeam,int i){
+    private void parseTeam(Sheet sheet, Range[] rangeCell, String column1, Team pTeam, int i) {
         Team team = new Team();
-        team.setTeamID(Integer.parseInt(pTeam.getTeamID()+""+(i+1)));
+        team.setTeamID(Integer.parseInt(pTeam.getTeamID() + "" + (i + 1)));
         team.setTeamName(column1);
         team.setColumn(i);
         team.setRow(mCurrRow);
@@ -282,8 +253,6 @@ public class SecontActivity extends BaseActivity implements RecyclerFragment.Rec
         team.setChildList(new ArrayList<>());
         team.setYeildList(new ArrayList<>());
         for (Range r : rangeCell) {
-            Log.e("yy",r.getTopLeft().getRow()+"=="+r.getBottomRight().getRow()+
-                    "::::"+r.getTopLeft().getColumn()+"=="+ r.getBottomRight().getColumn());
             if (mCurrRow >= r.getTopLeft().getRow() && mCurrRow <= r.getBottomRight().getRow()
                     && i >= r.getTopLeft().getColumn() && i <= r.getBottomRight().getColumn()) {
                 column1 = sheet.getCell(r.getTopLeft().getColumn(), r.getTopLeft().getRow()).getContents();
@@ -304,7 +273,7 @@ public class SecontActivity extends BaseActivity implements RecyclerFragment.Rec
     }
 
     public String changeNumToDate(String s) {
-        if(TextUtils.isEmpty(s)){
+        if (TextUtils.isEmpty(s)) {
             return "";
         }
         String rtn = "1900-01-01";
@@ -335,18 +304,18 @@ public class SecontActivity extends BaseActivity implements RecyclerFragment.Rec
         transaction.execute();
     }
 
-    private void insertTeam(List<Team> teams){
+    private void insertTeam(List<Team> teams) {
         for (Team info : teams) {
             info.save();
-            if(info.getChildList().isEmpty()){
+            if (info.getChildList().isEmpty()) {
                 insertYeild(info.getYeildList());
-            }else{
+            } else {
                 insertTeam(info.getChildList());
             }
         }
     }
 
-    private void insertYeild(List<Yeild> yeilds){
+    private void insertYeild(List<Yeild> yeilds) {
         for (Yeild info : yeilds) {
             info.save();
         }

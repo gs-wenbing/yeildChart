@@ -32,6 +32,15 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
+
 public class LFilePickerActivity extends AppCompatActivity {
 
     private final String TAG = "FilePickerLeon";
@@ -48,6 +57,8 @@ public class LFilePickerActivity extends AppCompatActivity {
     private Toolbar mToolbar;
     private ParamEntity mParamEntity;
     private LFileFilter mFilter;
+    private ProgressDialog dialog;
+    protected final CompositeDisposable mDisposables = new CompositeDisposable();
     private boolean mIsAllSelected = false;
     private Menu mMenu;
 
@@ -74,8 +85,16 @@ public class LFilePickerActivity extends AppCompatActivity {
         }
         mTvPath.setText(mPath);
         mFilter = new LFileFilter(mParamEntity.getFileTypes());
-        mListFiles = FileUtils.getFileList(mPath, mFilter, mParamEntity.isGreater(), mParamEntity.getFileSize(), mParamEntity.isSortFileUp());
-        mPathAdapter = new PathAdapter(mListFiles, this, mFilter, mParamEntity.isMutilyMode(), mParamEntity.isGreater(), mParamEntity.getFileSize(), mParamEntity.isSortFileUp());
+        mListFiles = new ArrayList<>();
+        mPathAdapter = new PathAdapter(this, mFilter, mParamEntity.isMutilyMode(), mParamEntity.isGreater(), mParamEntity.getFileSize(), mParamEntity.isSortFileUp());
+        if(mParamEntity.isOnlyFile()){
+            getOnlyFiles();
+
+        }else {
+            mListFiles = FileUtils.getFileList(mPath, mFilter, mParamEntity.isGreater(), mParamEntity.getFileSize(), mParamEntity.isSortFileUp());
+            mPathAdapter.setData(mListFiles);
+        }
+
         mRecylerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         mPathAdapter.setmIconStyle(mParamEntity.getIconStyle());
         mRecylerView.setAdapter(mPathAdapter);
@@ -83,6 +102,32 @@ public class LFilePickerActivity extends AppCompatActivity {
         initListener();
     }
 
+    private void getOnlyFiles(){
+        dialog = ProgressDialog.show(this, "", "正在查找文件，请不要退出...");
+        mDisposables.add(Observable.create(new ObservableOnSubscribe<Object>() {
+            @Override
+            public void subscribe(ObservableEmitter<Object> emitter) throws Exception {
+                FileUtils.getOnlyFiles(mPath, mFilter,mListFiles);
+                emitter.onNext("");
+            }
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Object>() {
+                    @Override
+                    public void accept(Object o) throws Exception {
+                        if (dialog.isShowing()) {
+                            dialog.dismiss();
+                        }
+                        mPathAdapter.setData(mListFiles);
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        throwable.printStackTrace();
+                    }
+                }));
+    }
     /**
      * 更新Toolbar展示
      */
@@ -273,6 +318,9 @@ public class LFilePickerActivity extends AppCompatActivity {
         if (mParamEntity.getAddText() != null) {
             mBtnAddBook.setText(mParamEntity.getAddText());
         }
+        if(mParamEntity.isOnlyFile()){
+            mLayoutPath.setVisibility(View.GONE);
+        }
     }
 
     /**
@@ -346,5 +394,9 @@ public class LFilePickerActivity extends AppCompatActivity {
             mMenu.getItem(0).setTitle(getString(R.string.lfile_SelectAll));
         }
     }
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mDisposables.clear();
+    }
 }

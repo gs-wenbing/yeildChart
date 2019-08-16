@@ -21,6 +21,7 @@ import com.zwb.yeildchart.R;
 
 import java.util.List;
 
+import io.reactivex.disposables.CompositeDisposable;
 import pub.devrel.easypermissions.EasyPermissions;
 
 
@@ -57,6 +58,7 @@ public abstract class BaseActivity extends AppCompatActivity implements EasyPerm
     protected LinearLayout llRight;
     public Context mContext = null;
 
+    protected final CompositeDisposable mDisposables = new CompositeDisposable();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -212,11 +214,6 @@ public abstract class BaseActivity extends AppCompatActivity implements EasyPerm
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
 
     protected <T extends View> T $(int id) {
         return (T) super.findViewById(id);
@@ -297,5 +294,11 @@ public abstract class BaseActivity extends AppCompatActivity implements EasyPerm
     public void finish() {
         super.finish();
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mDisposables.clear();
     }
 }
