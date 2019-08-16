@@ -8,39 +8,49 @@
         layout="@layout/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/row_spacing"
-        android:gravity="center_vertical">
+        android:orientation="horizontal">
 
         <TextView
-            android:layout_width="100dp"
+            android:id="@+id/tv_start_date"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="40dp"
-            android:gravity="center_vertical"
-            android:textSize="@dimen/common_size"
-            android:text="选择时间：" />
-
-        <TextView
-            android:id="@+id/tv_date"
-            android:layout_width="120dp"
-            android:layout_height="40dp"
-            android:gravity="center_vertical"
-            android:layout_marginLeft="120dp"
+            android:gravity="center"
             android:drawableRight="@mipmap/expand"
             android:drawablePadding="@dimen/row_spacing"
-            android:hint="选择年月"
+            android:hint="开始时间"
+            android:paddingRight="6dp"
+            android:textSize="@dimen/common_small_size" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="0.3"
+            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:text="——"/>
+        <TextView
+            android:id="@+id/tv_end_date"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:drawableRight="@mipmap/expand"
+            android:drawablePadding="@dimen/row_spacing"
+            android:hint="结束时间"
             android:paddingRight="6dp"
             android:textSize="@dimen/common_small_size" />
         <Button
             android:id="@+id/btn_query"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
-            android:layout_alignParentRight="true"
+            android:layout_marginLeft="20dp"
             android:gravity="center_vertical"
             android:textSize="@dimen/common_size"
             android:text="查看图表" />
-    </RelativeLayout>
+    </LinearLayout>
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/lineChart"
         android:layout_width="match_parent"

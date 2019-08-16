@@ -72,6 +72,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         recyclerFragment = RecyclerFragment.newInstance();
         fragmentTransaction.add(R.id.framelayout, recyclerFragment).commit();
         recyclerFragment.init(mAdapter, this);
+        recyclerFragment.setNeedCheckNet(false);
         String[] perms = {Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE};
         requestPermission(perms, 1);
 

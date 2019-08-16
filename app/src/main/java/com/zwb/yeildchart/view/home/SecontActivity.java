@@ -78,7 +78,7 @@ public class SecontActivity extends BaseActivity implements RecyclerFragment.Rec
         recyclerFragment = RecyclerFragment.newInstance();
         fragmentTransaction.add(R.id.framelayout, recyclerFragment).commit();
         recyclerFragment.init(mAdapter, this);
-
+        recyclerFragment.setNeedCheckNet(false);
     }
 
     @Override

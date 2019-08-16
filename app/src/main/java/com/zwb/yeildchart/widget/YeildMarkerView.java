@@ -8,7 +8,10 @@ import com.github.mikephil.charting.components.MarkerView;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.utils.MPPointF;
+import com.raizlabs.android.dbflow.sql.language.SQLite;
 import com.zwb.yeildchart.R;
+import com.zwb.yeildchart.model.Yeild;
+import com.zwb.yeildchart.model.Yeild_Table;
 
 /**
  * @author Administrator
@@ -34,8 +37,11 @@ public class YeildMarkerView extends MarkerView {
     @Override
     public void refreshContent(Entry e, Highlight highlight) {
         tvContent.setText("" + e.getY());
-        tvTime.setText(mPreDate + "-" + ((int) e.getX()));
-
+        int IValue = (int) e.getX();
+        Yeild yeild = SQLite.select().from(Yeild.class).where(Yeild_Table.id.eq(IValue)).querySingle();
+        if (yeild != null) {
+            tvTime.setText(yeild.getDate());
+        }
     }
 
     private MPPointF mOffset;
@@ -73,8 +79,5 @@ public class YeildMarkerView extends MarkerView {
             offset.x = -(width / 2);
         }
         return offset;
-    }
-    public void setPreDate(String preDate) {
-        this.mPreDate = preDate;
     }
 }

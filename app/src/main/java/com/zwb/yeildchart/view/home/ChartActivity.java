@@ -27,6 +27,7 @@ import com.zwb.yeildchart.dialog.TimeDialog;
 import com.zwb.yeildchart.model.Team;
 import com.zwb.yeildchart.model.Yeild;
 import com.zwb.yeildchart.model.Yeild_Table;
+import com.zwb.yeildchart.utils.Utils;
 import com.zwb.yeildchart.widget.YeildMarkerView;
 
 import java.text.SimpleDateFormat;
@@ -35,8 +36,9 @@ import java.util.Date;
 import java.util.List;
 
 public class ChartActivity extends BaseActivity implements View.OnClickListener {
+    private static final String TAG="ChartActivity";
     private Team mTeam;
-    TextView tvDate;
+    TextView tvStartDate,tvEndDate;
     Button btnQuery;
     LineChart lineChart;
     XAxis xAxis;
@@ -56,30 +58,31 @@ public class ChartActivity extends BaseActivity implements View.OnClickListener 
     protected void initPageView() {
         setRightVisible(false);
         setTitleText(mTeam.getTeamName() + "报表");
-        tvDate = $(R.id.tv_date);
+        tvStartDate = $(R.id.tv_start_date);
+        tvEndDate = $(R.id.tv_end_date);
         lineChart = $(R.id.lineChart);
         btnQuery = $(R.id.btn_query);
 
         mMarkerView =   new YeildMarkerView(mContext,R.layout.content_marker_view);
 
         Date date = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM");
-        tvDate.setText(dateFormat.format(date));
-        mMarkerView.setPreDate(dateFormat.format(date));
+        tvStartDate.setText(Utils.getFirstAndLastOfMonth(date)[0]);
+        tvEndDate.setText(Utils.getFirstAndLastOfMonth(date)[1]);
         initChart();
         setSingleDatas();
     }
 
     @Override
     protected void initListener() {
-        tvDate.setOnClickListener(this);
+        tvStartDate.setOnClickListener(this);
+        tvEndDate.setOnClickListener(this);
         btnQuery.setOnClickListener(this);
     }
 
     @Override
     protected void initData() {
         List<Yeild> teams = SQLite.select().from(Yeild.class).where(Yeild_Table.teamID.eq(mTeam.getTeamID())).queryList();
-        Log.e(">>>>>>>>>>>>>", teams.toString());
+        Log.e(TAG, teams.toString());
     }
 
     /**
@@ -98,6 +101,11 @@ public class ChartActivity extends BaseActivity implements View.OnClickListener 
         lineChart.setHighlightPerDragEnabled(true);//能否拖拽高亮线(数据点与坐标的提示线)，默认是true
         lineChart.setBackgroundColor(Color.WHITE);  //设置背景颜色
         lineChart.setMarker(mMarkerView);
+
+        //无数据时显示的文字
+        lineChart.setNoDataText("暂无数据");
+        lineChart.setNoDataTextColor(R.color.common_tv_color);
+
         //配置X轴属性
         xAxis = lineChart.getXAxis();
         //折线图不显示数值
@@ -121,7 +129,12 @@ public class ChartActivity extends BaseActivity implements View.OnClickListener 
             @Override
             public String getFormattedValue(float value) {
                 int IValue = (int) value;
-                return tvDate.getText().toString()+"-"+IValue;
+                Yeild yeild = SQLite.select().from(Yeild.class).where(Yeild_Table.id.eq(IValue)).querySingle();
+                if (yeild != null) {
+                    return yeild.getDate();
+                }else{
+                    return IValue+"";
+                }
             }
 
         });
@@ -146,11 +159,10 @@ public class ChartActivity extends BaseActivity implements View.OnClickListener 
      * count 单条折线的数据量
      */
     private void setSingleDatas() { //设置单条折线的X轴数据
-        mMarkerView.setPreDate(tvDate.getText().toString());
         OperatorGroup op = OperatorGroup.clause()
                 .and(Yeild_Table.teamID.eq(mTeam.getTeamID()))
-                .and(Yeild_Table.date.greaterThan(tvDate.getText().toString() + "-0"))
-                .and(Yeild_Table.date.lessThan(tvDate.getText().toString() + "-31"));
+                .and(Yeild_Table.date.greaterThanOrEq(tvStartDate.getText().toString()))
+                .and(Yeild_Table.date.lessThanOrEq(tvEndDate.getText().toString()));
         List<Yeild> teams = SQLite.select()
                 .from(Yeild.class)
                 .where(op)
@@ -160,9 +172,8 @@ public class ChartActivity extends BaseActivity implements View.OnClickListener 
         ArrayList<Entry> yList = new ArrayList<Entry>();
         for (int i = 0; i < teams.size(); i++) {
             Yeild yeild = teams.get(i);
-            Log.d(">>>>>>>>>>>>>", yeild.toString());
-            int day = Integer.parseInt(yeild.getDate().split("-")[2]);
-            yList.add(new Entry(day, yeild.getNumber()));
+
+            yList.add(new Entry(yeild.getId(), yeild.getNumber()));
         }
 
         LineDataSet lineDataSet = new LineDataSet(yList, mTeam.getTeamName());   //设置单条折线
@@ -190,12 +201,9 @@ public class ChartActivity extends BaseActivity implements View.OnClickListener 
         dataSets.add(lineDataSet);
 
         LineData data = new LineData(dataSets);
+        lineChart.setData(data);    //添加数据
         if(teams.isEmpty()){
-            //无数据时显示的文字
-            lineChart.setNoDataText(tvDate.getText().toString().replace("-","年")+"月暂无数据，请选择其他年月试试！");
-            lineChart.setNoDataTextColor(R.color.common_tv_color);
-        }else{
-            lineChart.setData(data);    //添加数据
+            Toast.makeText(mContext, "暂无数据，请选择其他年月试试！", Toast.LENGTH_SHORT).show();
         }
         lineChart.invalidate();
     }
@@ -203,14 +211,13 @@ public class ChartActivity extends BaseActivity implements View.OnClickListener 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.tv_date:
-                showDateSelector();
+            case R.id.tv_start_date:
+                showDateSelector(tvStartDate);
+                break;
+            case R.id.tv_end_date:
+                showDateSelector(tvEndDate);
                 break;
             case R.id.btn_query:
-                if(tvDate.getText()==null || TextUtils.isEmpty(tvDate.getText().toString())){
-                    Toast.makeText(mContext, "请选择年月", Toast.LENGTH_SHORT).show();
-                    return;
-                }
                 setSingleDatas();
                 break;
             default:
@@ -218,12 +225,12 @@ public class ChartActivity extends BaseActivity implements View.OnClickListener 
         }
     }
 
-    private void showDateSelector() {
+    private void showDateSelector(TextView tvDate) {
 
         TimeDialog chd = new TimeDialog(this, new TimeDialog.OnChatHintLinstener() {
             @Override
             public void onConfirm(String year, String month, String day, String hours, String mins) {
-                tvDate.setText(year + "-" + month);
+                tvDate.setText(year + "-" + month + "-" + day);
             }
 
             @Override
@@ -231,7 +238,14 @@ public class ChartActivity extends BaseActivity implements View.OnClickListener 
 
             }
         });
-        chd.setShowValue(true, true, false,  false,  false);
+
+        chd.setShowValue(true, false, false);
+        if (!TextUtils.isEmpty(tvDate.getText().toString())) {
+            String year = tvDate.getText().toString().split("-")[0];
+            String month = tvDate.getText().toString().split("-")[1];
+            String day = tvDate.getText().toString().split("-")[2];
+            chd.setTime(year, month, day, "0");
+        }
         chd.show();
     }
 }
